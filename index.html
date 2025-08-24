@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kalkulačka pro výpočet frézování sádrokartonu při ohýbání">
+    <meta name="theme-color" content="#2196F3">
+    <title>Sádrokarton Kalkulačka</title>
+    <!-- Ikony -->
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2196F3;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .form-section {
+            padding: 30px 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        .input-group .unit {
+            font-size: 12px;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        .angle-selection {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .angle-selection .angle-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .angle-selection select {
+            background-color: white;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .calculate-btn:hover {
+            background: #1976D2;
+        }
+
+        .results {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .result-value {
+            color: #2196F3;
+            font-weight: 700;
+        }
+
+        /* Zvýraznění vnější obvodové délky */
+        .result-item.highlighted {
+            background: #e8f5e8;
+            margin: 10px -10px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+        }
+
+        .result-item.highlighted .result-label {
+            color: #2e7d32;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .result-item.highlighted .result-value {
+            color: #1b5e20;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .highlighted-note {
+            font-size: 12px;
+            color: #2e7d32;
+            font-style: italic;
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .form-section {
+                padding: 20px 15px;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+
+            .angle-selection {
+                flex-direction: column;
+            }
+
+            .angle-selection .angle-option {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Úprava sádrokartonu</h1>
+            <p>Výpočet frézování pro ohýbání desek</p>
+        </div>
+
+        <div class="form-section">
+            <form id="calculatorForm">
+                <div class="input-group">
+                    <label for="distanceFromWall">
+                        Vzdálenost od stěny <span class="unit">(mm)</span>
+                    </label>
+                    <input type="number" id="distanceFromWall" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="boardThickness">
+                        Tloušťka sádrokartonové desky <span class="unit">(mm)</span>
+                    </label>
+                    <input type="number" id="boardThickness" value="12.5" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="millingDiameter">
+                        Průměr frézky <span class="unit">(mm)</span>
+                    </label>
+                    <input type="number" id="millingDiameter" value="4" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="angle">
+                        Úhel ohybu <span class="unit">(°)</span>
+                    </label>
+                    <div class="angle-selection">
+                        <div class="angle-option">
+                            <select id="angle">
+                                <option value="30">30° - Mělký ohyb</option>
+                                <option value="45">45° - Šikmý roh</option>
+                                <option value="60">60° - Ostrý ohyb</option>
+                                <option value="90" selected>90° - Pravý úhel</option>
+                                <option value="120">120° - Tupý úhel</option>
+                                <option value="135">135° - Široký ohyb</option>
+                                <option value="180">180° - Půlkruh</option>
+                                <option value="custom">Vlastní úhel</option>
+                            </select>
+                        </div>
+                        <div class="angle-option">
+                            <input type="number" id="customAngle" placeholder="Vlastní úhel (°)" 
+                                   min="1" max="360" step="0.1" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="calculate-btn">
+                    Vypočítat
+                </button>
+            </form>
+
+            <div id="results" class="results">
+                <h3 style="margin-bottom: 15px; color: #333;">📊 Výsledky výpočtu</h3>
+                
+                <div class="result-item">
+                    <span class="result-label">Úhel ohybu:</span>
+                    <span class="result-value" id="selectedAngle">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Vnější poloměr:</span>
+                    <span class="result-value" id="outerRadius">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Vnitřní poloměr:</span>
+                    <span class="result-value" id="innerRadius">-</span>
+                </div>
+                
+                <div class="result-item highlighted" id="outerCircumferenceItem">
+                    <div>
+                        <span class="result-label">Vnější obvodová délka:</span>
+                        <div class="highlighted-note">📏 Délka desky potřebné pro frézování</div>
+                    </div>
+                    <span class="result-value" id="outerCircumference">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Vnitřní obvodová délka:</span>
+                    <span class="result-value" id="innerCircumference">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Rozdíl obvodů:</span>
+                    <span class="result-value" id="circumferenceDifference">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Počet drážek:</span>
+                    <span class="result-value" id="groovesCount">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Počet políček:</span>
+                    <span class="result-value" id="segmentsCount">-</span>
+                </div>
+                
+                <div class="result-item" style="background: #e3f2fd; margin: 10px -10px; padding: 15px; border-radius: 5px;">
+                    <span class="result-label" style="font-size: 16px;">Rozestup drážek:</span>
+                    <span class="result-value" style="font-size: 18px;" id="grooveSpacing">-</span>
+                </div>
+
+                <div class="diagram">
+                    <svg id="diagramSvg" width="100%" height="200" viewBox="0 0 300 200">
+                        <!-- Diagram bude generován JS -->
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // Obsluha výběru vlastního úhlu
+        document.getElementById('angle').addEventListener('change', function() {
+            const customAngleInput = document.getElementById('customAngle');
+            if (this.value === 'custom') {
+                customAngleInput.style.display = 'block';
+                customAngleInput.required = true;
+            } else {
+                customAngleInput.style.display = 'none';
+                customAngleInput.required = false;
+            }
+        });
+
+        // Hlavní kalkulační logika
+        const form = document.getElementById('calculatorForm');
+        const resultsDiv = document.getElementById('results');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateValues();
+        });
+
+        function calculateValues() {
+            // Získání hodnot z formuláře
+            const distanceFromWall = parseFloat(document.getElementById('distanceFromWall').value);
+            const boardThickness = parseFloat(document.getElementById('boardThickness').value);
+            const millingDiameter = parseFloat(document.getElementById('millingDiameter').value);
+            
+            // Získání úhlu
+            let selectedAngle;
+            const angleSelect = document.getElementById('angle').value;
+            if (angleSelect === 'custom') {
+                selectedAngle = parseFloat(document.getElementById('customAngle').value);
+                if (!selectedAngle || selectedAngle <= 0 || selectedAngle > 360) {
+                    alert('Zadejte platný vlastní úhel (1-360°)');
+                    return;
+                }
+            } else {
+                selectedAngle = parseFloat(angleSelect);
+            }
+
+            // Převod úhlu na radiány pro výpočet
+            const angleInRadians = (selectedAngle * Math.PI) / 180;
+
+            // Výpočty podle vaší logiky s úhlem
+            const outerRadius = distanceFromWall * 2;
+            const outerCircumference = Math.round((outerRadius * angleInRadians));
+            
+            const innerRadius = outerRadius - (2 * boardThickness);
+            const innerCircumference = Math.round((innerRadius * angleInRadians));
+            
+            const circumferenceDifference = outerCircumference - innerCircumference;
+            const groovesCount = Math.round(circumferenceDifference / millingDiameter);
+            const segmentsCount = groovesCount + 1;
+            const grooveSpacing = outerCircumference / segmentsCount;
+
+            // Zobrazení výsledků
+            document.getElementById('selectedAngle').textContent = selectedAngle + '°';
+            document.getElementById('outerRadius').textContent = outerRadius.toFixed(1) + ' mm';
+            document.getElementById('innerRadius').textContent = innerRadius.toFixed(1) + ' mm';
+            document.getElementById('outerCircumference').textContent = outerCircumference + ' mm';
+            document.getElementById('innerCircumference').textContent = innerCircumference + ' mm';
+            document.getElementById('circumferenceDifference').textContent = circumferenceDifference + ' mm';
+            document.getElementById('groovesCount').textContent = groovesCount + ' ks';
+            document.getElementById('segmentsCount').textContent = segmentsCount + ' ks';
+            document.getElementById('grooveSpacing').textContent = grooveSpacing.toFixed(2) + ' mm';
+
+            // Zobrazení výsledků
+            resultsDiv.classList.add('show');
+
+            // Generování diagramu
+            generateDiagram(outerRadius, innerRadius, groovesCount, grooveSpacing, selectedAngle);
+        }
+
+        function generateDiagram(outerRadius, innerRadius, groovesCount, grooveSpacing, angle) {
+            const svg = document.getElementById('diagramSvg');
+            svg.innerHTML = '';
+
+            const lineLength = 250;
+            const startX = 25;
+            const lineY = 100;
+            const grooveHeight = 15;
+
+            const segmentsCount = groovesCount + 1;
+            const segmentWidth = lineLength / segmentsCount;
+
+            let svgContent = `
+                <line x1="${startX}" y1="${lineY}" x2="${startX + lineLength}" y2="${lineY}" 
+                      stroke="#2196F3" stroke-width="4"/>
+                
+                <line x1="${startX}" y1="${lineY - 10}" x2="${startX}" y2="${lineY + 10}" 
+                      stroke="#FF5722" stroke-width="3"/>
+                <line x1="${startX + lineLength}" y1="${lineY - 10}" x2="${startX + lineLength}" y2="${lineY + 10}" 
+                      stroke="#FF5722" stroke-width="3"/>
+                
+                <text x="${startX}" y="${lineY - 15}" text-anchor="middle" font-size="10" fill="#FF5722">Okraj</text>
+                <text x="${startX + lineLength}" y="${lineY - 15}" text-anchor="middle" font-size="10" fill="#FF5722">Okraj</text>
+            `;
+
+            for (let i = 1; i <= groovesCount; i++) {
+                const grooveX = startX + (i * segmentWidth);
+                svgContent += `
+                    <line x1="${grooveX}" y1="${lineY - grooveHeight/2}" x2="${grooveX}" y2="${lineY + grooveHeight/2}" 
+                          stroke="#4CAF50" stroke-width="2"/>
+                    <text x="${grooveX}" y="${lineY + 25}" text-anchor="middle" font-size="8" fill="#4CAF50">${i}</text>
+                `;
+            }
+
+            for (let i = 1; i <= segmentsCount; i++) {
+                const segmentCenterX = startX + ((i - 0.5) * segmentWidth);
+                svgContent += `
+                    <text x="${segmentCenterX}" y="${lineY - 25}" text-anchor="middle" font-size="10" fill="#666" font-weight="bold">P${i}</text>
+                `;
+            }
+
+            svgContent += '<line x1="' + startX + '" y1="' + (lineY + 50) + '" x2="' + (startX + lineLength) + '" y2="' + (lineY + 50) + '" stroke="#999" stroke-width="1"/>';
+            svgContent += '<text x="' + (startX + lineLength/2) + '" y="' + (lineY + 45) + '" text-anchor="middle" font-size="11" fill="#333">Délka oblouku při ' + angle + '°</text>';
+            svgContent += '<text x="25" y="30" font-size="12" fill="#333" font-weight="bold">Schéma frézování:</text>';
+            svgContent += '<text x="25" y="45" font-size="10" fill="#2196F3">━ Sádrokartonová deska</text>';
+            svgContent += '<text x="25" y="58" font-size="10" fill="#4CAF50">| Drážky (' + groovesCount + ' ks)</text>';
+            svgContent += '<text x="180" y="45" font-size="10" fill="#666">P1-P' + segmentsCount + ' Políčka (' + segmentsCount + ' ks)</text>';
+            svgContent += '<text x="180" y="58" font-size="10" fill="#FF5722">| Okraje desky</text>';
+            svgContent += '<text x="' + (startX + lineLength/2) + '" y="180" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">Rozestup drážek: ' + grooveSpacing.toFixed(2) + ' mm</text>';
+
+            svg.innerHTML = svgContent;
+        }
+     
+
+        // Načtení při startu
+        window.addEventListener('load', () => {
+            // Inicializace aplikace
+            console.log('Kalkulačka sádrokartonu načtena');
+        });
+    </script>
+        <footer style="text-align:center; font-size: 0.8em; color: #888; padding: 1em 0;">
+  Součást ekosystému <strong>NeoStudio Analytics</strong> – © 2025
+</footer> 
+</body>
+</html>
