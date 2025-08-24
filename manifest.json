@@ -1,6 +1,6 @@
 {
   "name": "Sádrokarton Kalkulačka",
-  "short_name": "Kalkulačka",
+  "short_name": "Frézování SDK",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -17,4 +17,5 @@
       "type": "image/png"
     }
   ]
+
 }
