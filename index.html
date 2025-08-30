@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kalkulačka pro výpočet frézování sádrokartonu při ohýbání">
+    <meta name="theme-color" content="#2196F3">
+    <title>Sádrokarton Kalkulačka</title>
+    
+    <!-- PWA Meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SK Kalkulačka">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#2196F3">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="shortcut icon" href="icons/icon-192.png">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Úprava sádrokartonu</h1>
+            <p>Výpočet frézování pro ohýbání desek</p>
+        </div>
+
+        <div class="form-section">
+            <form id="calculatorForm">
+                <div class="input-group">
+                    <label for="distanceFromWall">
+                        Vzdálenost od stěny <span class="unit">(mm)</span>
+                    </label>
+                    <input type="number" id="distanceFromWall" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="boardThickness">
+                        Tloušťka sádrokartonové desky <span class="unit">(mm)</span>
+                    </label>
+                    <input type="number" id="boardThickness" value="12.5" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="millingDiameter">
+                        Průměr frézky <span class="unit">(mm)</span>
+                    </label>
+                    <input type="number" id="millingDiameter" value="4" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="angle">
+                        Úhel ohybu <span class="unit">(°)</span>
+                    </label>
+                    <div class="angle-selection">
+                        <div class="angle-option">
+                            <select id="angle">
+                                <option value="30">30° - Mělký ohyb</option>
+                                <option value="45">45° - Šikmý roh</option>
+                                <option value="60">60° - Ostrý ohyb</option>
+                                <option value="90" selected>90° - Pravý úhel</option>
+                                <option value="120">120° - Tupý úhel</option>
+                                <option value="135">135° - Široký ohyb</option>
+                                <option value="180">180° - Půlkruh</option>
+                                <option value="custom">Vlastní úhel</option>
+                            </select>
+                        </div>
+                        <div class="angle-option">
+                            <input type="number" id="customAngle" placeholder="Vlastní úhel (°)" 
+                                   min="1" max="360" step="0.1" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="calculate-btn">
+                    Vypočítat
+                </button>
+            </form>
+
+            <div id="results" class="results">
+                <h3 style="margin-bottom: 15px; color: #333;">📊 Výsledky výpočtu</h3>
+                
+                <div class="result-item">
+                    <span class="result-label">Úhel ohybu:</span>
+                    <span class="result-value" id="selectedAngle">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Vnější poloměr:</span>
+                    <span class="result-value" id="outerRadius">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Vnitřní poloměr:</span>
+                    <span class="result-value" id="innerRadius">-</span>
+                </div>
+                
+                <div class="result-item highlighted" id="outerCircumferenceItem">
+                    <div>
+                        <span class="result-label">Vnější obvodová délka:</span>
+                        <div class="highlighted-note">📏 Délka desky potřebné pro frézování</div>
+                    </div>
+                    <span class="result-value" id="outerCircumference">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Vnitřní obvodová délka:</span>
+                    <span class="result-value" id="innerCircumference">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Rozdíl obvodů:</span>
+                    <span class="result-value" id="circumferenceDifference">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Počet drážek:</span>
+                    <span class="result-value" id="groovesCount">-</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Počet políček:</span>
+                    <span class="result-value" id="segmentsCount">-</span>
+                </div>
+                
+                <div class="result-item" style="background: #e3f2fd; margin: 10px -10px; padding: 15px; border-radius: 5px;">
+                    <span class="result-label" style="font-size: 16px;">Rozestup drážek:</span>
+                    <span class="result-value" style="font-size: 18px;" id="grooveSpacing">-</span>
+                </div>
+
+                <div class="diagram">
+                    <svg id="diagramSvg" width="100%" height="200" viewBox="0 0 300 200">
+                        <!-- Diagram bude generován JS -->
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- PWA Install Banner (volitelné) -->
+        <div id="installBanner" class="install-banner" style="display: none;">
+            <div class="install-content">
+                <span>📱 Nainstalujte si aplikaci pro rychlejší přístup!</span>
+                <button id="installBtn">Nainstalovat</button>
+                <button id="dismissBtn">×</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer style="text-align:center; font-size: 0.8em; color: #888; padding: 1em 0;">
+        Součást ekosystému <strong>NeoStudio Analytics</strong> – © 2025
+    </footer>
+
+    <!-- PWA Registration Script -->
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registration successful:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New content is available
+                                    console.log('New content available, please refresh.');
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+        const dismissBtn = document.getElementById('dismissBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install banner
+            if (installBanner) {
+                installBanner.style.display = 'block';
+            }
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to PWA install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                    installBanner.style.display = 'none';
+                }
+            });
+        }
+
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                installBanner.style.display = 'none';
+                deferredPrompt = null;
+            });
+        }
+
+        // Hide install banner if app is already installed
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
+            if (installBanner) {
+                installBanner.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+
+        // Detect if running as PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+            console.log('Running as PWA');
+            document.body.classList.add('pwa-mode');
+        }
+    </script>
+
+    <script src="main.js"></script>
+
+    <style>
+        /* PWA Install Banner Styles */
+        .install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            padding: 15px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .install-banner[style*="block"] {
+            transform: translateY(0);
+        }
+
+        .install-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 500px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .install-content span {
+            flex: 1;
+            min-width: 200px;
+            font-size: 14px;
+        }
+
+        #installBtn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        #installBtn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        #dismissBtn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+            opacity: 0.7;
+        }
+
+        #dismissBtn:hover {
+            opacity: 1;
+        }
+
+        /* PWA mode adjustments */
+        .pwa-mode {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        @media (max-width: 480px) {
+            .install-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .install-content span {
+                min-width: auto;
+            }
+        }
+    </style>
+</body>
+</html>
